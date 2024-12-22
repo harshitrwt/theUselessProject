@@ -5,6 +5,7 @@ import { Leaderboard } from './components/Leaderboard';
 import { InventionGrid } from './components/InventionGrid';
 import { SubmitInventionModal } from './components/SubmitInventionModal';
 import { useState, useEffect } from 'react';
+import { Footer } from './components/Footer';
 
 interface Invention {
   id: string;
@@ -21,7 +22,11 @@ function App() {
     const savedInventions = localStorage.getItem('inventions');
     return savedInventions ? JSON.parse(savedInventions) : [];
   });
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [showMessage, setShowMessage] = useState(false);
+  
   const [votedInventions, setVotedInventions] = useState<string[]>(() => {
     const savedVotes = localStorage.getItem('votedInventions');
     return savedVotes ? JSON.parse(savedVotes) : [];
@@ -37,7 +42,8 @@ function App() {
 
   const handleVote = (id: string) => {
     if (votedInventions.includes(id)) {
-      alert('You have already voted for this invention.');
+      setMessage('You have already voted for this invention. Thank you for your enthusiasm!'); // Improved message
+      setShowMessage(true);
       return;
     }
 
@@ -48,15 +54,28 @@ function App() {
     );
 
     setVotedInventions(prev => [...prev, id]);
+    setMessage('Thank you for your vote! Your support makes a difference!'); // Improved message
+    setShowMessage(true);
   };
 
   const handleSubmitInvention = (newInvention: Invention) => {
     setInventions(prev => [newInvention, ...prev]);
   };
 
+  // Automatically hide the message after a few seconds
+  useEffect(() => {
+    if (showMessage) {
+      const timer = setTimeout(() => {
+        setShowMessage(false);
+      }, 3000); // Message will disappear after 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [showMessage]);
+
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-950">
         <Header />
         <Routes>
           <Route
@@ -72,11 +91,17 @@ function App() {
                   onClose={() => setIsModalOpen(false)}
                   onSubmit={handleSubmitInvention}
                 />
+                {showMessage && (
+                  <div className="fixed top-20 right-10 bg-white text-purple-600 border border-purple-600 rounded-lg p-4 shadow-lg">
+                    {message}
+                  </div>
+                )}
               </>
             }
           />
           <Route path="/leaderboard" element={<Leaderboard inventions={inventions} />} />
         </Routes>
+        <Footer />
       </div>
     </Router>
   );
